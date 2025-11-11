@@ -63,7 +63,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       if (role == 'Client') {
         Navigator.pushReplacementNamed(
           context,
-          '/client/preferences',
+          '/client/info',
           arguments: {'email': email},
         );
       } else if (role == 'Service Provider') {

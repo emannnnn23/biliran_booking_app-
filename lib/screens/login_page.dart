@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
       if (user.role == 'Client') {
         Navigator.pushReplacementNamed(
           context,
-          '/client/home',
+          '/main',
           arguments: {'email': email},
         );
       } else if (user.role == 'Service Provider') {

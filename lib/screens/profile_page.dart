@@ -2,9 +2,14 @@
 // -------------------------------------------------------
 // 👤 DYNAMIC PROFILE PAGE (Editable User Information)
 // -------------------------------------------------------
+// - Loads real client data from mockUsers
+// - Allows editing + saving (updates in-memory database)
+// - Routes back to ClientHomePage after saving
+// -------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import '../theme.dart';
+import '../data/mock_user.dart'; // ✅ Import mockUsers data
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,17 +19,71 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // 🧾 Controllers for editable text fields
-  final TextEditingController _nameController =
-      TextEditingController(text: "John Doe");
-  final TextEditingController _emailController =
-      TextEditingController(text: "john.doe@gmail.com");
-  final TextEditingController _phoneController =
-      TextEditingController(text: "+63 912 345 6789");
-  final TextEditingController _locationController =
-      TextEditingController(text: "Naval, Biliran");
-
   bool _isEditing = false; // Toggles edit mode
+  late String email;
+
+  // 🧾 Controllers for editable text fields
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _barangayController = TextEditingController();
+  final _municipalityController = TextEditingController();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // ✅ Get email from route arguments
+    final args = ModalRoute.of(context)!.settings.arguments as Map?;
+    email = args?['email'] ?? '';
+
+    // ✅ Load user data from mockUsers
+    final user = mockUsers.firstWhere(
+      (u) => u.email == email,
+      orElse: () => MockUser(email: '', password: '', role: 'Client'),
+    );
+
+    _nameController.text =
+        "${user.firstName ?? ''} ${user.middleInitial ?? ''} ${user.lastName ?? ''}".trim();
+    _emailController.text = user.email;
+    _phoneController.text = user.phoneNumber ?? '';
+    _barangayController.text = user.barangay ?? '';
+    _municipalityController.text = user.municipality ?? '';
+  }
+
+  // -------------------------------------------------------
+  // 💾 Save Updates
+  // -------------------------------------------------------
+  void _saveChanges() {
+    // Split full name back into components (simple parse)
+    final nameParts = _nameController.text.trim().split(' ');
+    final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+    final lastName =
+        nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+    // ✅ Update the mock user info
+    updateClientInfo(email, {
+      'firstName': firstName,
+      'lastName': lastName,
+      'phoneNumber': _phoneController.text.trim(),
+      'barangay': _barangayController.text.trim(),
+      'municipality': _municipalityController.text.trim(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Profile updated successfully!'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // ✅ Route back to Home Page (auto-refreshes)
+    Navigator.pushReplacementNamed(
+      context,
+      '/main',
+      arguments: {'email': email},
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,18 +100,8 @@ class _ProfilePageState extends State<ProfilePage> {
             icon: Icon(_isEditing ? Icons.check : Icons.edit),
             tooltip: _isEditing ? 'Save Changes' : 'Edit Profile',
             onPressed: () {
-              if (_isEditing) {
-                // When saving changes
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Profile updated successfully!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-              setState(() {
-                _isEditing = !_isEditing;
-              });
+              if (_isEditing) _saveChanges();
+              setState(() => _isEditing = !_isEditing);
             },
           ),
         ],
@@ -80,7 +129,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    _nameController.text,
+                    _nameController.text.isNotEmpty
+                        ? _nameController.text
+                        : 'Your Name',
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -125,7 +176,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Email Address",
               controller: _emailController,
               icon: Icons.email_outlined,
-              isEditable: _isEditing,
+              isEditable: false, // email is fixed
             ),
             _editableField(
               label: "Phone Number",
@@ -134,41 +185,19 @@ class _ProfilePageState extends State<ProfilePage> {
               isEditable: _isEditing,
             ),
             _editableField(
-              label: "Location",
-              controller: _locationController,
-              icon: Icons.location_on_outlined,
+              label: "Barangay",
+              controller: _barangayController,
+              icon: Icons.home_outlined,
+              isEditable: _isEditing,
+            ),
+            _editableField(
+              label: "Municipality",
+              controller: _municipalityController,
+              icon: Icons.location_city_outlined,
               isEditable: _isEditing,
             ),
 
             const SizedBox(height: 30),
-
-            // -------------------------------------------------------
-            // ⚙️ SETTINGS SECTION
-            // -------------------------------------------------------
-            const Text(
-              "Settings",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            ListTile(
-              leading: const Icon(Icons.lock_outline, color: AppColors.primary),
-              title: const Text("Change Password"),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Change password feature coming soon!"),
-                  ),
-                );
-              },
-            ),
-
-            const Divider(height: 30),
 
             // -------------------------------------------------------
             // 🚪 LOGOUT BUTTON
@@ -182,8 +211,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 label: const Text("Logout"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 40, vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -221,17 +250,13 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       child: TextField(
         controller: controller,
-        enabled: isEditable, // ✅ Only editable in edit mode
-        style: const TextStyle(
-          fontSize: 15,
-          color: AppColors.text,
-        ),
+        enabled: isEditable,
+        style: const TextStyle(fontSize: 15, color: AppColors.text),
         decoration: InputDecoration(
           prefixIcon: Icon(icon, color: AppColors.primary),
           labelText: label,
           labelStyle: const TextStyle(color: AppColors.muted),
           border: InputBorder.none,
-          disabledBorder: InputBorder.none,
         ),
       ),
     );

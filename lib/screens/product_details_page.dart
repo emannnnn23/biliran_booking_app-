@@ -1,9 +1,6 @@
 // lib/screens/product_details_page.dart
 // -------------------------------------------------------
-// PRODUCT DETAILS PAGE
-// -------------------------------------------------------
-// Displays full product info with image, price, and actions
-// like chatting with the seller or buying the item.
+// PRODUCT DETAILS PAGE (with visible Chat Seller button)
 // -------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -86,7 +83,7 @@ class ProductDetailsPage extends StatelessWidget {
               children: [
                 const CircleAvatar(
                   backgroundImage:
-                      AssetImage('assets/images/landscape.jpg'),
+                      AssetImage('assets/images/profile_placeholder.png'),
                   radius: 22,
                 ),
                 const SizedBox(width: 10),
@@ -117,65 +114,79 @@ class ProductDetailsPage extends StatelessWidget {
               product.description,
               style: const TextStyle(fontSize: 15, color: AppColors.text),
             ),
+            const SizedBox(height: 100), // gives space before buttons
+          ],
+        ),
+      ),
 
-            const SizedBox(height: 30),
+      // -------------------------------------------------------
+      // FIXED BOTTOM ACTION BUTTONS
+      // -------------------------------------------------------
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 💬 Chat Seller
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // ✅ Use your MessageThread model here
+                  final newThread = MessageThread(
+                    providerName: product.seller,
+                    providerImage: 'assets/images/profile_placeholder.png',
+                    lastMessage:
+                        'Hello! I’m interested in ${product.name}.',
+                    timestamp: DateTime.now(),
+                  );
 
-            // -------------------------------------------------------
-            // ACTION BUTTONS
-            // -------------------------------------------------------
-            Row(
-              children: [
-                // 💬 Chat Seller Button
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // ✅ Use your MessageThread model here
-                      final newThread = MessageThread(
-                        providerName: product.seller,
-                        providerImage: 'assets/images/coconut.jpg',
-                        lastMessage:
-                            'Hello! I’m interested in ${product.name}.',
-                        timestamp: DateTime.now(),
-                      );
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatPage(thread: newThread),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.chat_bubble_outline),
-                    label: const Text('Chat Seller'),
-                    style: OutlinedButton.styleFrom(
-                      side:
-                          const BorderSide(color: AppColors.primary, width: 1.5),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChatPage(thread: newThread),
                     ),
-                  ),
+                  );
+                },
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text('Chat Seller'),
+                style: OutlinedButton.styleFrom(
+                  side:
+                      const BorderSide(color: AppColors.primary, width: 1.5),
+                  minimumSize: const Size.fromHeight(50),
                 ),
+              ),
+            ),
 
-                const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-                // 🛒 Buy Now Button
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                              'Purchased "${product.name}" successfully (mock)!'),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.shopping_cart_checkout),
-                    label: const Text('Buy Now'),
-                    style: ElevatedButton.styleFrom(
+            // 🛒 Buy Now
+            Expanded(
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Purchased "${product.name}" successfully (mock)!'),
                       backgroundColor: AppColors.primary,
                     ),
-                  ),
+                  );
+                },
+                icon: const Icon(Icons.shopping_cart_checkout),
+                label: const Text('Buy Now'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size.fromHeight(50),
                 ),
-              ],
+              ),
             ),
           ],
         ),

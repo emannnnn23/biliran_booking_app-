@@ -4,6 +4,7 @@
 // -------------------------------------------------------
 
 
+import 'package:biliran_booking_app/screens/client_information_page.dart';
 import 'package:flutter/material.dart';
 import 'theme.dart'; // We'll create this next
 import 'screens/landing_page.dart';
@@ -11,7 +12,6 @@ import 'screens/login_page.dart';
 import 'screens/signup_page.dart';
 import 'screens/otp_verification_page.dart';
 import 'screens/client_preference_page.dart';
-import 'screens/client_location_page.dart';
 import 'screens/client_home_page.dart';
 import 'screens/main_navigation.dart';
 
@@ -44,7 +44,7 @@ class BiliranProvinceBookingApp extends StatelessWidget {
         '/signup': (context) => const SignUpPage(),
         '/otp': (context) => const OtpVerificationPage(),
         '/client/preferences': (context) => const ClientPreferencePage(),
-        '/client/location': (context) => const ClientLocationPage(),
+        '/client/info': (context) => const ClientInformationPage(),
         '/client/home': (context) => const ClientHomePage(),
         '/main': (context) => const MainNavigation(),
       },

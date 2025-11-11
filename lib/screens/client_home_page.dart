@@ -1,25 +1,22 @@
 // lib/screens/client_home_page.dart
 // -------------------------------------------------------
-// CLIENT HOME PAGE
+// CLIENT HOME PAGE (Dynamic + Marketplace + Search)
 // -------------------------------------------------------
 // Features:
-// - Sidebar Drawer (Menu)
-// - Top AppBar with Search icon
-// - Tab Navigation: Services + Marketplace
-// - Dynamic content feed for both tabs
+// ✅ Displays client's name and address dynamically
+// ✅ Marketplace button on the top-left
+// ✅ Search bar for filtering services
+// ✅ Reads data from mockUsers (persistent frontend state)
 // -------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../data/mock_data.dart';
-import '../data/mock_products.dart'; // 🆕 mock products data
+import '../data/mock_user.dart'; // ✅ to access saved user info
 import '../models/service_model_package.dart';
-import '../models/product_model.dart';
 import 'booking_confirmation_page.dart';
+import 'marketplace_feed_page.dart';
 
-// -------------------------------------------------------
-// 🏠 CLIENT HOME PAGE (Main Scaffold with Tabs + Drawer)
-// -------------------------------------------------------
 class ClientHomePage extends StatefulWidget {
   const ClientHomePage({super.key});
 
@@ -29,6 +26,7 @@ class ClientHomePage extends StatefulWidget {
 
 class _ClientHomePageState extends State<ClientHomePage> {
   Map? _arguments;
+  String _searchQuery = '';
 
   @override
   void didChangeDependencies() {
@@ -40,107 +38,130 @@ class _ClientHomePageState extends State<ClientHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final location = _arguments?['location'] ?? 'Biliran Province';
-    final List prefs = _arguments?['preferences'] ?? [];
+    // ✅ Extract user email from arguments
+    final email = _arguments?['email'];
 
-    return DefaultTabController(
-      length: 2, // 🔹 Two main tabs: Services & Marketplace
-      child: Scaffold(
-        // 🔹 APP BAR
-        appBar: AppBar(
-          title: const Text('Biliran Province Booking'),
-          automaticallyImplyLeading: true,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.search),
-              tooltip: 'Search services or products',
-              onPressed: () {
-                // 🔍 TODO: Add search functionality for services & products
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Search feature coming soon...'),
-                  ),
-                );
-              },
+    // ✅ Retrieve user data directly from mockUsers
+    final user = mockUsers.firstWhere(
+      (u) => u.email == email,
+      orElse: () => MockUser(
+        email: '',
+        password: '',
+        role: 'Client',
+      ),
+    );
+
+    // ✅ Dynamic user info
+    final firstName = user.firstName ?? 'Client';
+    final barangay = user.barangay ?? 'Unknown Barangay';
+    final municipality = user.municipality ?? 'Biliran Province';
+    final prefs = user.preferences ?? [];
+
+    return Scaffold(
+      // -------------------------------------------------------
+      // 🔹 APP BAR
+      // -------------------------------------------------------
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Welcome, $firstName!',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              '$barangay, $municipality',
+              style: const TextStyle(fontSize: 13, color: Colors.white70),
             ),
           ],
-          bottom: const TabBar(
-            labelColor: Colors.white,
-            indicatorColor: Colors.white,
-            tabs: [
-              Tab(icon: Icon(Icons.home_repair_service), text: 'Services'),
-              Tab(icon: Icon(Icons.shopping_bag_outlined), text: 'Marketplace'),
-            ],
-          ),
         ),
+        automaticallyImplyLeading: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Search services or products',
+            onPressed: () {
+              // Show search bar dialog
+              showSearch(
+                context: context,
+                delegate: ServiceSearchDelegate(),
+              );
+            },
+          ),
+        ],
+      ),
 
-        // 🔹 SIDEBAR DRAWER MENU
-        drawer: Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              const DrawerHeader(
-                decoration: BoxDecoration(color: AppColors.primary),
-                child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Text(
-                    'Menu',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+      // -------------------------------------------------------
+      // 🔹 SIDEBAR DRAWER
+      // -------------------------------------------------------
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(color: AppColors.primary),
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: Text(
+                  'Menu',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              ListTile(
-                leading: const Icon(Icons.home),
-                title: const Text('Home'),
-                onTap: () => Navigator.pop(context),
-              ),
-              ListTile(
-                leading: const Icon(Icons.book),
-                title: const Text('My Bookings'),
-                onTap: () => Navigator.pushNamed(context, '/bookings'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text('My Profile'),
-                onTap: () => Navigator.pushNamed(context, '/profile'),
-              ),
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Logout'),
-                onTap: () {
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
-              ),
-            ],
-          ),
-        ),
-
-        // 🔹 BODY CONTENT (TABS)
-        body: TabBarView(
-          children: [
-            HomeFeedScreen(location: location, preferences: prefs),
-            const MarketplaceFeedScreen(),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ListTile(
+              leading: const Icon(Icons.book),
+              title: const Text('My Bookings'),
+              onTap: () => Navigator.pushNamed(context, '/bookings'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
+              onTap: () => Navigator.pushNamed(context, '/profile'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+            ),
           ],
         ),
+      ),
+
+      // -------------------------------------------------------
+      // 🔹 BODY CONTENT (Services Feed + Marketplace Button)
+      // -------------------------------------------------------
+      body: HomeFeedScreen(
+        preferences: prefs,
+        barangay: barangay,
+        municipality: municipality,
       ),
     );
   }
 }
 
 // -------------------------------------------------------
-// 🧩 HOME FEED TAB (Dynamic Service Feed)
+// 🧩 HOME FEED SCREEN (Dynamic Service Feed + Marketplace Link)
 // -------------------------------------------------------
 class HomeFeedScreen extends StatelessWidget {
-  final String location;
+  final String barangay;
+  final String municipality;
   final List preferences;
 
   const HomeFeedScreen({
     super.key,
-    required this.location,
+    required this.barangay,
+    required this.municipality,
     required this.preferences,
   });
 
@@ -157,9 +178,37 @@ class HomeFeedScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Header
+          // -------------------------------------------------------
+          // 🛍️ Marketplace Button (Top Left)
+          // -------------------------------------------------------
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.storefront_outlined, size: 20),
+              label: const Text('Marketplace'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MarketplaceFeedScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // -------------------------------------------------------
+          // 📍 Location & Preferences Info
+          // -------------------------------------------------------
           Text(
-            'Showing services in $location',
+            'Showing services in $barangay, $municipality',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -172,6 +221,10 @@ class HomeFeedScreen extends StatelessWidget {
             style: const TextStyle(color: AppColors.muted),
           ),
           const SizedBox(height: 20),
+
+          // -------------------------------------------------------
+          // 🧱 SERVICE FEED (Dynamic Packages)
+          // -------------------------------------------------------
           const Text(
             'Recommended for You',
             style: TextStyle(
@@ -182,7 +235,6 @@ class HomeFeedScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Dynamic Service Feed
           Column(
             children: packages.map((pkg) {
               return Container(
@@ -203,7 +255,7 @@ class HomeFeedScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Provider Info
+                      // 👩‍💼 Provider Info
                       Row(
                         children: [
                           CircleAvatar(
@@ -228,7 +280,7 @@ class HomeFeedScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
 
-                      // Package Info
+                      // 📦 Package Info
                       Text(pkg.title,
                           style: const TextStyle(
                               fontSize: 16,
@@ -241,7 +293,7 @@ class HomeFeedScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
 
-                      // Book Button
+                      // 🟩 Book Now Button
                       Align(
                         alignment: Alignment.centerRight,
                         child: ElevatedButton(
@@ -272,86 +324,64 @@ class HomeFeedScreen extends StatelessWidget {
 }
 
 // -------------------------------------------------------
-// 🛍️ MARKETPLACE TAB (Creative Product Feed)
+// 🔍 SEARCH DELEGATE (Basic Search Feature)
 // -------------------------------------------------------
-class MarketplaceFeedScreen extends StatelessWidget {
-  const MarketplaceFeedScreen({super.key});
+class ServiceSearchDelegate extends SearchDelegate {
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: const Icon(Icons.clear),
+        onPressed: () => query = '',
+      )
+    ];
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final List<Product> products = List.from(mockProducts)
-      ..sort((a, b) => b.datePosted.compareTo(a.datePosted));
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final results = mockPackages
+        .where((pkg) =>
+            pkg.title.toLowerCase().contains(query.toLowerCase()) ||
+            pkg.provider.name.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    if (results.isEmpty) {
+      return const Center(child: Text('No matching results found.'));
+    }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: products.length,
+      itemCount: results.length,
       itemBuilder: (context, index) {
-        final product = products[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
+        final pkg = results[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundImage: AssetImage(pkg.provider.profileImage),
+          ),
+          title: Text(pkg.title),
+          subtitle: Text(pkg.provider.name),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingConfirmationPage(package: pkg),
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Product Image
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.asset(product.image,
-                      height: 180, width: double.infinity, fit: BoxFit.cover),
-                ),
-                const SizedBox(height: 10),
-                // Product Info
-                Text(product.name,
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.text)),
-                Text('by ${product.seller}',
-                    style: const TextStyle(color: AppColors.muted)),
-                const SizedBox(height: 6),
-                Text('₱${product.price.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16)),
-                const SizedBox(height: 10),
-                Text(product.description,
-                    style: const TextStyle(color: AppColors.text)),
-                const SizedBox(height: 10),
-                // Buy Button
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.shopping_cart_checkout_outlined),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('Added "${product.name}" to your cart!'),
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                    },
-                    label: const Text('Buy Now'),
-                  ),
-                ),
-              ],
-            ),
-          ),
+            );
+          },
         );
       },
     );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return const Center(child: Text('Search for services...'));
   }
 }

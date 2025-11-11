@@ -8,6 +8,7 @@ final List<Product> mockProducts = [
     seller: 'Lara’s Art Studio',
     price: 450.0,
     description: 'Eco-friendly handmade bowl crafted from coconut shells.',
+    discountAmount: 200.0,
     datePosted: DateTime.now().subtract(const Duration(days: 1)),
   ),
   Product(
@@ -16,6 +17,7 @@ final List<Product> mockProducts = [
     image: 'assets/images/landscape.jpg',
     seller: 'Art by Rico',
     price: 1200.0,
+    discountAmount: 200.0,
     description: 'Original acrylic painting of Biliran’s coastal beauty.',
     datePosted: DateTime.now().subtract(const Duration(days: 2)),
   ),

@@ -2,9 +2,10 @@
 // -------------------------------------------------------
 // CLIENT PREFERENCE PAGE (Connected to Mock User Data)
 // -------------------------------------------------------
-// After OTP verification, clients land here to select
-// event services they are interested in.
-// Their selections are saved to mockUsers for personalization.
+// After the client fills out the information form,
+// they land here to select event services they are interested in.
+// The selected preferences are saved to mockUsers for personalization,
+// and the user is redirected to their Home Page.
 // -------------------------------------------------------
 
 import 'package:flutter/material.dart';
@@ -34,14 +35,16 @@ class _ClientPreferencePageState extends State<ClientPreferencePage> {
   final Set<String> _selected = {};
 
   late String email; // from arguments
+  Map<String, dynamic>? userInfo; // info passed from client info form
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    // ✅ Retrieve email passed from OTP verification
+    // ✅ Retrieve email and info passed from ClientInformationPage
     final args = ModalRoute.of(context)!.settings.arguments as Map?;
     email = args?['email'] ?? '';
+    userInfo = args?['info'] ?? {};
   }
 
   // 🔹 Handle continue button
@@ -59,11 +62,23 @@ class _ClientPreferencePageState extends State<ClientPreferencePage> {
     // ✅ Save selected preferences to mock user data
     updateClientPreferences(email, _selected.toList());
 
-    // ✅ Navigate to next step — location setup
-    Navigator.pushNamed(
+    // ✅ Navigate to Home Page and pass full info
+    Navigator.pushReplacementNamed(
       context,
-      '/client/location',
-      arguments: {'email': email},
+      '/main',
+      arguments: {
+        'email': email,
+        'userInfo': userInfo,
+        'preferences': _selected.toList(),
+      
+      },
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Preferences saved successfully!'),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 
@@ -114,9 +129,16 @@ class _ClientPreferencePageState extends State<ClientPreferencePage> {
             const SizedBox(height: 20),
 
             // 🔹 Continue button
-            ElevatedButton(
-              onPressed: _next,
-              child: const Text('Next'),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _next,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text('Continue to Home'),
+              ),
             ),
           ],
         ),
