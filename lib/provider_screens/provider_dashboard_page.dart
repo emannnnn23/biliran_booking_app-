@@ -18,6 +18,9 @@ class ProviderDashboardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // -----------------------------------------------------------
+            // Welcome Name
+            // -----------------------------------------------------------
             Text(
               "Welcome, ${user.businessName ?? user.firstName ?? 'Provider'}!",
               style: const TextStyle(
@@ -26,9 +29,41 @@ class ProviderDashboardPage extends StatelessWidget {
                 color: AppColors.text,
               ),
             ),
+
+            const SizedBox(height: 6),
+
+            // -----------------------------------------------------------
+            // ⭐ LOCATION DISPLAY
+            // -----------------------------------------------------------
+            Row(
+              children: [
+                const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    "${user.municipality}, ${user.barangay}",
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 4),
+
+            if (user.fullAddress != null && user.fullAddress!.isNotEmpty)
+              Text(
+                user.fullAddress!,
+                style: const TextStyle(fontSize: 13, color: AppColors.muted),
+              ),
+
             const SizedBox(height: 20),
 
-            // ----------- DASHBOARD CARDS -----------
+            // -----------------------------------------------------------
+            // DASHBOARD CARDS
+            // -----------------------------------------------------------
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -71,11 +106,13 @@ class ProviderDashboardPage extends StatelessWidget {
           const SizedBox(height: 10),
           Text(title, style: const TextStyle(fontSize: 14)),
           const SizedBox(height: 6),
-          Text(value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              )),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );

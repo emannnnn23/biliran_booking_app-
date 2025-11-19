@@ -10,6 +10,7 @@ import 'provider_product_list.dart';
 import 'provider_booking_orders.dart';
 import 'provider_product_orders.dart';
 import 'provider_profile_page.dart';
+import 'provider_messages.dart';  // ⭐ ADDED
 
 class ProviderMainNavigation extends StatefulWidget {
   final String email;
@@ -32,7 +33,9 @@ class _ProviderMainNavigationState extends State<ProviderMainNavigation> {
     final List<Widget> pages = [];
     final List<BottomNavigationBarItem> navItems = [];
 
-    // Always include Dashboard
+    // ----------------------------------------------------
+    // ALWAYS: DASHBOARD
+    // ----------------------------------------------------
     pages.add(ProviderDashboardPage(email: widget.email));
     navItems.add(const BottomNavigationBarItem(
       icon: Icon(Icons.dashboard_outlined),
@@ -41,7 +44,7 @@ class _ProviderMainNavigationState extends State<ProviderMainNavigation> {
     ));
 
     // -------------------------
-    // BOOKING TABS
+    // BOOKING TAB
     // -------------------------
     if (user.serviceType == "booking" || user.serviceType == "both") {
       pages.add(ProviderBookingListPage(email: widget.email));
@@ -53,7 +56,7 @@ class _ProviderMainNavigationState extends State<ProviderMainNavigation> {
     }
 
     // -------------------------
-    // SELLING TABS
+    // PRODUCT TAB
     // -------------------------
     if (user.serviceType == "selling" || user.serviceType == "both") {
       pages.add(ProviderProductListPage(email: widget.email));
@@ -72,11 +75,20 @@ class _ProviderMainNavigationState extends State<ProviderMainNavigation> {
           ? ProviderBookingOrdersPage(email: widget.email)
           : ProviderProductOrdersPage(email: widget.email),
     );
-
     navItems.add(const BottomNavigationBarItem(
       icon: Icon(Icons.receipt_long_outlined),
       activeIcon: Icon(Icons.receipt_long),
       label: "Orders",
+    ));
+
+    // -------------------------
+    // ⭐ MESSAGES TAB (NEW)
+    // -------------------------
+    pages.add(const ProviderMessagesPage());
+    navItems.add(const BottomNavigationBarItem(
+      icon: Icon(Icons.chat_bubble_outline),
+      activeIcon: Icon(Icons.chat_bubble),
+      label: "Messages",
     ));
 
     // -------------------------

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../data/mock_messages.dart';
 import 'provider_chat_page.dart';
+import 'provider_notification_page.dart';
 
 // Compatibility helper: expose a `clientName` accessor for various mock thread shapes.
 // This uses dynamic access to tolerate different field names in the mock model
@@ -35,7 +36,24 @@ class _ProviderMessagesPageState extends State<ProviderMessagesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Client Messages")),
+      appBar: AppBar(
+        title: const Text("Client Messages"),
+        actions: [
+          IconButton(
+            icon:const Icon(Icons.notifications_none),
+            onPressed: () {
+              Navigator.push(
+                context,
+              MaterialPageRoute(
+                builder: (context) => const ProviderNotificationsPage(),
+              ),
+              );
+            },
+          ),
+        // You can add action buttons here if needed
+      ],
+      ),
+      
 
       body: mockThreads.isEmpty
           ? const Center(
