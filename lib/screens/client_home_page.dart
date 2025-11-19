@@ -9,6 +9,7 @@
 // ✅ Reads data from mockUsers (persistent frontend state)
 // -------------------------------------------------------
 
+import 'package:biliran_booking_app/screens/main_navigation.dart';
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../data/mock_data.dart';
@@ -178,29 +179,20 @@ class HomeFeedScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // -------------------------------------------------------
-          // 🛍️ Marketplace Button (Top Left)
-          // -------------------------------------------------------
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.storefront_outlined, size: 20),
-              label: const Text('Marketplace'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MarketplaceFeedScreen(),
-                  ),
-                );
-              },
-            ),
-          ),
+          
+// 🛍️ Marketplace Icon Button (Top Left)
+// -------------------------------------------------------
+Align(
+  alignment: Alignment.centerRight,
+  child: IconButton(
+    icon: const Icon(Icons.storefront_outlined, size: 30, color: AppColors.primary),
+    tooltip: "Open Marketplace",
+    onPressed: () {
+      MainNavigation.of(context)?.goToMarketplace();
+    },
+  ),
+),
+
 
           const SizedBox(height: 16),
 

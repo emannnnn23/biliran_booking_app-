@@ -1,25 +1,23 @@
-// lib/screens/chat_page.dart
+// lib/provider_screens/provider_chat_page.dart
 // -------------------------------------------------------
-// CHAT PAGE — Unified Client <-> Provider Chat Model
+// PROVIDER CHAT PAGE — Provider replies to clients
 // -------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import '../theme.dart';
-
 import '../data/mock_messages.dart';
 
-class ChatPage extends StatefulWidget {
+class ProviderChatPage extends StatefulWidget {
   final MockMessageThread thread;
 
-  const ChatPage({super.key, required this.thread, required String currentUserEmail});
+  const ProviderChatPage({super.key, required this.thread});
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  State<ProviderChatPage> createState() => _ProviderChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
+class _ProviderChatPageState extends State<ProviderChatPage> {
   final TextEditingController _controller = TextEditingController();
-
   late MockMessageThread thread;
 
   @override
@@ -28,13 +26,13 @@ class _ChatPageState extends State<ChatPage> {
     thread = widget.thread;
   }
 
-  // SEND MESSAGE (client side for now)
+  // 📩 Provider sends message
   void _sendMessage() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
 
     final newMsg = ChatMessage(
-      sender: thread.clientEmail, // client sends message
+      sender: thread.providerEmail,
       text: text,
       time: DateTime.now(),
     );
@@ -44,19 +42,15 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     _controller.clear();
-
-    // update list sorting
-    _updateThreadLastMessage();
+    _updateThread();
   }
 
-  void _updateThreadLastMessage() {
+  void _updateThread() {
     final index = mockThreads.indexWhere((t) =>
         t.clientEmail == thread.clientEmail &&
         t.providerEmail == thread.providerEmail);
 
-    if (index != -1) {
-      mockThreads[index] = thread;
-    }
+    if (index != -1) mockThreads[index] = thread;
   }
 
   @override
@@ -65,17 +59,17 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            CircleAvatar(
-              backgroundImage: AssetImage(thread.providerImage),
+            const CircleAvatar(
+              backgroundImage:
+                  AssetImage("assets/images/profile_placeholder.png"),
               radius: 16,
             ),
             const SizedBox(width: 10),
-            Text(thread.providerName),
+            Text(thread.clientName),
           ],
         ),
       ),
 
-      // MAIN CHAT BODY
       body: Column(
         children: [
           Expanded(
@@ -84,17 +78,17 @@ class _ChatPageState extends State<ChatPage> {
               itemCount: thread.messages.length,
               itemBuilder: (context, index) {
                 final msg = thread.messages[index];
-                final isClient = msg.sender == thread.clientEmail;
+                final isProvider = msg.sender == thread.providerEmail;
 
-                return _bubble(msg.text, isClient);
+                return _bubble(msg.text, isProvider);
               },
             ),
           ),
 
-          // MESSAGE INPUT
           SafeArea(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               color: Colors.grey[100],
               child: Row(
                 children: [
@@ -130,27 +124,27 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _bubble(String text, bool isClient) {
+  Widget _bubble(String text, bool isProvider) {
     return Align(
-      alignment: isClient ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isProvider ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isClient
+          color: isProvider
               ? AppColors.primary
               : AppColors.primary.withOpacity(0.1),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isClient ? 16 : 0),
-            bottomRight: Radius.circular(isClient ? 0 : 16),
+            bottomLeft: Radius.circular(isProvider ? 16 : 0),
+            bottomRight: Radius.circular(isProvider ? 0 : 16),
           ),
         ),
         child: Text(
           text,
           style: TextStyle(
-            color: isClient ? Colors.white : AppColors.text,
+            color: isProvider ? Colors.white : AppColors.text,
             fontSize: 15,
           ),
         ),

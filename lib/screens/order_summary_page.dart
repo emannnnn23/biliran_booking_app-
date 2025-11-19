@@ -1,3 +1,5 @@
+// lib/screens/order_summary_page.dart
+
 import 'package:flutter/material.dart';
 import '../data/mock_cart_data.dart';
 import '../models/product_model.dart';
@@ -21,20 +23,28 @@ class OrderSummaryPage extends StatelessWidget {
     final totalPrice = product.discountedPrice * quantity;
 
     void _confirmOrder() {
+      // Add to cart FIRST (safe)
       addToCart(product, quantity: quantity, paymentMethod: paymentMethod);
 
+      // Show confirmation snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Order confirmed for "${product.name}"!'),
           backgroundColor: AppColors.primary,
+          duration: const Duration(milliseconds: 800),
         ),
       );
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const CartPage()),
-        (route) => false,
-      );
+      // ⭐ FIX: Delay navigation to prevent layout crash
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (context.mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const CartPage()),
+            (route) => false,
+          );
+        }
+      });
     }
 
     return Scaffold(
@@ -52,28 +62,39 @@ class OrderSummaryPage extends StatelessWidget {
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(product.name,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: AppColors.text)),
+                child: Text(
+                  product.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: AppColors.text,
+                  ),
+                ),
               ),
             ]),
+
             const SizedBox(height: 20),
+
             _summaryRow('Quantity', '$quantity pcs'),
             _summaryRow('Unit Price', '₱${product.discountedPrice.toStringAsFixed(2)}'),
             _summaryRow('Payment Method', paymentMethod),
+
             const Divider(height: 30),
+
             _summaryRow('Total', '₱${totalPrice.toStringAsFixed(2)}', bold: true),
+
             const Spacer(),
+
             ElevatedButton(
               onPressed: _confirmOrder,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text('Confirm Order',
-                  style: TextStyle(fontSize: 16)),
+              child: const Text(
+                'Confirm Order',
+                style: TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),

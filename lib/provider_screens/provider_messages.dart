@@ -1,33 +1,46 @@
-// lib/screens/messages_screen.dart
+// lib/provider_screens/provider_messages_page.dart
 // -------------------------------------------------------
-// 💬 MESSAGES SCREEN (Unified for Client + Provider)
+// PROVIDER MESSAGES PAGE — Shows conversations with clients
 // -------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import '../theme.dart';
-
 import '../data/mock_messages.dart';
-import 'chat_page.dart';
+import 'provider_chat_page.dart';
 
-class MessagesScreen extends StatefulWidget {
-  const MessagesScreen({super.key});
-
-  @override
-  State<MessagesScreen> createState() => _MessagesScreenState();
+// Compatibility helper: expose a `clientName` accessor for various mock thread shapes.
+// This uses dynamic access to tolerate different field names in the mock model
+// (e.g. name, client, senderName). It returns 'Unknown' if no suitable field is found.
+String _clientNameOf(Object? thread) {
+  try {
+    final dyn = thread as dynamic;
+    return (dyn.clientName as String?) ??
+           (dyn.name as String?) ??
+           (dyn.client as String?) ??
+           (dyn.senderName as String?) ??
+           'Unknown';
+  } catch (_) {
+    return 'Unknown';
+  }
 }
 
-class _MessagesScreenState extends State<MessagesScreen> {
+class ProviderMessagesPage extends StatefulWidget {
+  const ProviderMessagesPage({super.key});
+
+  @override
+  State<ProviderMessagesPage> createState() => _ProviderMessagesPageState();
+}
+
+class _ProviderMessagesPageState extends State<ProviderMessagesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Messages"),
-      ),
+      appBar: AppBar(title: const Text("Client Messages")),
 
       body: mockThreads.isEmpty
           ? const Center(
               child: Text(
-                "No messages yet.",
+                "No client messages yet.",
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.muted, fontSize: 16),
               ),
@@ -53,12 +66,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   ),
                   child: ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: AssetImage(thread.providerImage),
+                      backgroundImage:
+                          const AssetImage("assets/images/profile_placeholder.png"),
                       radius: 25,
                     ),
 
+                    // 🔥 Provider sees CLIENT NAME here
                     title: Text(
-                      thread.providerName,
+                      _clientNameOf(thread),
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.text,
@@ -84,7 +99,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ChatPage(thread: thread, currentUserEmail: 'user@example.com'),
+                          builder: (_) => ProviderChatPage(thread: thread),
                         ),
                       );
                     },

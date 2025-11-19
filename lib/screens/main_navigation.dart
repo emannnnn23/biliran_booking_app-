@@ -9,9 +9,14 @@ import 'client_home_page.dart';
 import 'booking_page.dart';
 import 'messages_page.dart';
 import 'profile_page.dart';
+import 'marketplace_feed_page.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
+
+  // Allow other pages to call navigation actions
+  static _MainNavigationState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MainNavigationState>();
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
@@ -21,9 +26,16 @@ class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
 
+  // Normal tab switching
   void _onTabTapped(int index) {
     setState(() => _currentIndex = index);
     _pageController.jumpToPage(index);
+  }
+
+  // ⭐ SPECIAL: Go to Marketplace INSIDE PageView
+  void goToMarketplace() {
+    _pageController.jumpToPage(4);
+    setState(() => _currentIndex = 0); // Keep Home selected
   }
 
   @override
@@ -33,12 +45,14 @@ class _MainNavigationState extends State<MainNavigation> {
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
         children: const [
-          ClientHomePage(),
-          BookingsScreen(),
-          MessagesScreen(),
-          ProfilePage(),
+          ClientHomePage(),     // index 0
+          BookingsScreen(),     // index 1
+          MessagesScreen(),     // index 2
+          ProfilePage(),        // index 3
+          MarketplaceFeedScreen(), // index 4 (hidden)
         ],
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         selectedItemColor: AppColors.primary,

@@ -1,14 +1,4 @@
-// lib/screens/client_information_page.dart
-// -------------------------------------------------------
-// 🧾 CLIENT INFORMATION FORM PAGE (Replaces Location Page)
-// -------------------------------------------------------
-// After OTP verification, the client fills in their basic info.
-// Data is temporarily stored in mockUsers (frontend DB).
-// After submitting, user proceeds to the Preferences Page.
-// -------------------------------------------------------
-
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import '../data/mock_user.dart';
 import '../theme.dart';
 
@@ -22,7 +12,6 @@ class ClientInformationPage extends StatefulWidget {
 class _ClientInformationPageState extends State<ClientInformationPage> {
   final _formKey = GlobalKey<FormState>();
 
-  // 🧩 Form controllers
   final _firstNameCtrl = TextEditingController();
   final _middleInitialCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
@@ -32,37 +21,53 @@ class _ClientInformationPageState extends State<ClientInformationPage> {
 
   String? _selectedMunicipality;
   String? _selectedBarangay;
-  String? _selectedValidID;
-  String? _uploadedFileName;
+
+  bool _isPhoneVerified = false;
   String? email;
 
-  // 🗺️ Dropdown data (Biliran Province)
-  final List<String> _municipalities = [
-    'Naval',
-    'Biliran',
-    'Caibiran',
-    'Almeria',
-    'Kawayan',
-    'Culaba',
-    'Maripipi',
-    'Cabucgayan',
-  ];
-
-  final List<String> _barangays = [
-    'Brgy. Agpangi',
-    'Brgy. Larrazabal',
-    'Brgy. Sto. Niño',
-    'Brgy. Atipolo',
-    'Brgy. Calumpang',
-  ];
-
-  final List<String> _validIDs = [
-    'PhilHealth ID',
-    'National ID',
-    'Driver’s License',
-    'Voter’s ID',
-    'Passport',
-  ];
+  // MUNICIPALITIES & BARANGAYS OF BILIRAN PROVINCE
+  final Map<String, List<String>> biliranBarangays = {
+    "Naval": [
+      "Aguinaldo","Anislagan","Atipolo","Borac","Calumpang","Caraycaray",
+      "Catmon","Iyos","Larrazabal","Lico","Libertad","Lucsoon","Marbel",
+      "P.I. Garcia","P.I. Labrador","Sabang","San Pablo","San Roque","Santo Niño",
+      "Santissimo Rosario","Suyang","Talustusan","Villa Caneja","Villa Consuelo"
+    ],
+    "Biliran": [
+      "Bato","Busali","Burabod","Canila","Catmon","Haguikhikan","Hugpa","Julita",
+      "Kawayanon","Poblacion","San Isidro","San Roque","San Vicente","Santo Niño",
+      "Sulang","Villa Cornejo","Villa Enage"
+    ],
+    "Caibiran": [
+      "Alegria","Asug","Bangon","Bunga","Cabibihan","Canila","Castin","Kaulangohan",
+      "Lo-ok","Manlabang","Palengke","Poblacion","Rawis","Salvacion","Uson",
+      "Victory","Villa Vicenta"
+    ],
+    "Culaba": [
+      "Balaquid","Binongto-an","Bool","Burabod","Guin-aranan","Habuhab","Himatagon",
+      "Imelda","Inasuyan","Patag","Poblacion Zone I","Poblacion Zone II","Pongon",
+      "Salvacion","San Roque","Talisay","Tungade"
+    ],
+    "Kawayan": [
+      "Balitir","Binirao","Bunga","Burabod","Cabungaan","Cahicsan",
+      "Calangcawan Norte","Calangcawan Sur","Canipo","Center (Poblacion)",
+      "Inasuyan","Kabangkalan","Kapiñahan","Masagaosao","Pili","Tabunan",
+      "Talibong","Tubig Guino-o","Villa Cornejo","Villa Mercedes"
+    ],
+    "Almeria": [
+      "Balacson","Cabulihan","Jamordan","Lo-ok","Matanggo","Poblacion","Sampao",
+      "Tabunan","Talahid","Tangkigan","Uson","Villa Vicenta","San Isidro"
+    ],
+    "Maripipi": [
+      "Banlas","Bato","Binalayan East","Binalayan West","Burabod","Danao","Esperanza",
+      "Poblacion","San Antonio","San Isidro","San Jose","San Roque","Santa Cruz",
+      "Santo Niño","Takotak"
+    ],
+    "Cabucgayan": [
+      "Balaquid","Bunga","Cabibihan","Cambino","Kawayanon","Lo-ok","Magbangon",
+      "Poblacion East","Poblacion West","Salvacion","Talibong","Union","Villahermosa"
+    ],
+  };
 
   @override
   void didChangeDependencies() {
@@ -82,50 +87,47 @@ class _ClientInformationPageState extends State<ClientInformationPage> {
     super.dispose();
   }
 
-  // -------------------------------------------------------
-  // 📸 Pick ID Photo using File Picker (Web Safe)
-  // -------------------------------------------------------
-  Future<void> _pickIDImage() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-      if (result != null && result.files.single.name.isNotEmpty) {
-        setState(() {
-          _uploadedFileName = result.files.single.name;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('✅ ID image selected: $_uploadedFileName')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Failed to pick image: $e')),
-      );
-    }
-  }
-
-  // -------------------------------------------------------
-  // 💾 Save Info → Update mockUsers → Go to Preferences
-  // -------------------------------------------------------
-  void _saveAndContinue() {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedMunicipality == null || _selectedBarangay == null) {
+  // PHONE VERIFICATION
+  void _sendVerificationCode() {
+    if (_phoneCtrl.text.trim().length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select your municipality and barangay.'),
+          content: Text("Enter a valid phone number first."),
           backgroundColor: Colors.redAccent,
         ),
       );
       return;
     }
 
-    if (_uploadedFileName == null) {
+    setState(() => _isPhoneVerified = true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Verification code sent to ${_phoneCtrl.text}!"),
+        backgroundColor: AppColors.primary,
+      ),
+    );
+  }
+
+  // SAVE & CONTINUE
+  void _saveAndContinue() {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedMunicipality == null || _selectedBarangay == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please upload a valid ID photo.'),
+          content: Text("Select Municipality and Barangay."),
           backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
+    if (!_isPhoneVerified) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please verify your phone number first."),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -140,31 +142,24 @@ class _ClientInformationPageState extends State<ClientInformationPage> {
       'fullAddress': _addressCtrl.text.trim(),
       'age': int.tryParse(_ageCtrl.text.trim()) ?? 0,
       'phoneNumber': _phoneCtrl.text.trim(),
-      'validId': _uploadedFileName,
     };
 
-    // 🧠 Save to mockUsers
-    if (email != null) {
-      updateClientInfo(email!, info);
-      debugPrint('✅ Client info saved for $email');
-      debugPrintUsers();
-    }
+    if (email != null) updateClientInfo(email!, info);
 
-    // 🚀 Navigate to Preferences Page
     Navigator.pushReplacementNamed(
       context,
       '/client/preferences',
-      arguments: {'email': email,}
-      
-      
+      arguments: {'email': email},
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final barangayList = biliranBarangays[_selectedMunicipality] ?? [];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Complete Your Profile'),
+        title: const Text("Complete Your Profile"),
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -175,127 +170,131 @@ class _ClientInformationPageState extends State<ClientInformationPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                'Please provide your information:',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
+                "Please provide your information:",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 20),
 
-              // 🧍‍♂️ Personal Info
+              // NAME FIELDS
               TextFormField(
                 controller: _firstNameCtrl,
-                decoration: const InputDecoration(labelText: 'First Name'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter first name' : null,
+                decoration: const InputDecoration(labelText: "First Name"),
+                validator: (v) => v!.isEmpty ? "Required" : null,
               ),
               const SizedBox(height: 12),
 
               TextFormField(
                 controller: _middleInitialCtrl,
-                decoration: const InputDecoration(labelText: 'Middle Initial (optional)'),
+                decoration: const InputDecoration(labelText: "Middle Initial"),
               ),
               const SizedBox(height: 12),
 
               TextFormField(
                 controller: _lastNameCtrl,
-                decoration: const InputDecoration(labelText: 'Last Name'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter last name' : null,
+                decoration: const InputDecoration(labelText: "Last Name"),
+                validator: (v) => v!.isEmpty ? "Required" : null,
               ),
               const SizedBox(height: 20),
 
-              // 🎂 Age + Phone
+              // AGE
               TextFormField(
                 controller: _ageCtrl,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Age'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter your age' : null,
+                decoration: const InputDecoration(labelText: "Age"),
+                validator: (v) => v!.isEmpty ? "Required" : null,
               ),
               const SizedBox(height: 12),
 
-              TextFormField(
-                controller: _phoneCtrl,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Phone Number'),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter your phone number' : null,
-              ),
-              const SizedBox(height: 12),
+              // PHONE + VERIFIED BUTTON (FIXED)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _phoneCtrl,
+                      keyboardType: TextInputType.phone,
+                      decoration:
+                          const InputDecoration(labelText: "Phone Number"),
+                      validator: (v) => v!.isEmpty ? "Required" : null,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
 
-              // 🏠 Municipality + Barangay
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Municipality'),
-                value: _selectedMunicipality,
-                items: _municipalities
-                    .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedMunicipality = value),
-                validator: (v) =>
-                    v == null ? 'Please select your municipality' : null,
-              ),
-              const SizedBox(height: 12),
-
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Barangay'),
-                value: _selectedBarangay,
-                items: _barangays
-                    .map((b) => DropdownMenuItem(value: b, child: Text(b)))
-                    .toList(),
-                onChanged: (value) => setState(() => _selectedBarangay = value),
-                validator: (v) =>
-                    v == null ? 'Please select your barangay' : null,
-              ),
-              const SizedBox(height: 12),
-
-              // 📍 Full Address
-              TextFormField(
-                controller: _addressCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Full Address (Street, Purok, etc.)',
-                ),
-                validator: (v) =>
-                    v == null || v.isEmpty ? 'Enter your full address' : null,
+                  // ✅ FIXED BUTTON
+                  SizedBox(
+                    width: 110,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed:
+                          _isPhoneVerified ? null : _sendVerificationCode,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _isPhoneVerified
+                            ? Colors.grey
+                            : AppColors.primary,
+                      ),
+                      child: Text(_isPhoneVerified ? "Verified" : "Verify"),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
 
-              // 🪪 Valid ID Dropdown
+              // MUNICIPALITY
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: 'Valid ID Type'),
-                value: _selectedValidID,
-                items: _validIDs
-                    .map((id) => DropdownMenuItem(value: id, child: Text(id)))
+                decoration: const InputDecoration(labelText: "Municipality"),
+                value: _selectedMunicipality,
+                items: biliranBarangays.keys
+                    .map((m) =>
+                        DropdownMenuItem(value: m, child: Text(m)))
                     .toList(),
-                onChanged: (value) => setState(() => _selectedValidID = value),
-                validator: (v) => v == null ? 'Select a valid ID type' : null,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedMunicipality = value;
+                    _selectedBarangay = null;
+                  });
+                },
+                validator: (v) => v == null ? "Required" : null,
               ),
               const SizedBox(height: 12),
 
-              // 📸 Upload ID Button
-              OutlinedButton.icon(
-                onPressed: _pickIDImage,
-                icon: const Icon(Icons.upload_file),
-                label: Text(
-                  _uploadedFileName == null
-                      ? 'Upload ID Photo'
-                      : 'Uploaded: $_uploadedFileName',
-                ),
+              // BARANGAY
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: "Barangay"),
+                value: barangayList.contains(_selectedBarangay)
+                    ? _selectedBarangay
+                    : null,
+                items: barangayList
+                    .map((b) =>
+                        DropdownMenuItem(value: b, child: Text(b)))
+                    .toList(),
+                onChanged: barangayList.isEmpty
+                    ? null
+                    : (value) =>
+                        setState(() => _selectedBarangay = value),
+                validator: (v) {
+                  if (barangayList.isEmpty) return "Select municipality first";
+                  return v == null ? "Required" : null;
+                },
+              ),
+              const SizedBox(height: 12),
+
+              // ADDRESS
+              TextFormField(
+                controller: _addressCtrl,
+                decoration: const InputDecoration(
+                    labelText: "Full Address (Street, Purok, etc.)"),
+                validator: (v) => v!.isEmpty ? "Required" : null,
               ),
               const SizedBox(height: 30),
 
-              // ✅ Continue Button
+              // SAVE BUTTON
               ElevatedButton(
                 onPressed: _saveAndContinue,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text(
-                  'Save and Continue',
-                  style: TextStyle(fontSize: 16),
-                ),
+                child: const Text("Save and Continue",
+                    style: TextStyle(fontSize: 16)),
               ),
             ],
           ),

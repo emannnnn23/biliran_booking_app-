@@ -14,6 +14,11 @@ import 'screens/otp_verification_page.dart';
 import 'screens/client_preference_page.dart';
 import 'screens/client_home_page.dart';
 import 'screens/main_navigation.dart';
+import 'provider_screens/provider_type_page.dart';
+import 'provider_screens/provider_information_page.dart';
+import 'provider_screens/provider_booking_setup_page.dart';
+import 'provider_screens/provider_selling_setup_page.dart';
+import 'provider_screens/provider_both_setup_page.dart';
 
 // Main function — starting point of every Flutter app
 void main() {
@@ -47,6 +52,13 @@ class BiliranProvinceBookingApp extends StatelessWidget {
         '/client/info': (context) => const ClientInformationPage(),
         '/client/home': (context) => const ClientHomePage(),
         '/main': (context) => const MainNavigation(),
+      
+        '/provider/type': (context) => const ProviderTypeSelectionPage(),
+        '/provider/information': (context) => const ProviderInformationPage(),  
+        '/provider/setup_booking': (context) => const ProviderBookingSetupPage(),
+        '/provider/setup_selling': (context) => const ProviderSellingSetupPage(),
+        '/provider/setup_both': (context) => const ProviderBothSetupPage(),
+
       },
     );
   }

@@ -21,8 +21,8 @@ class MarketplaceFeedScreen extends StatelessWidget {
           icon: const Icon(Icons.shopping_cart_outlined),
           tooltip: 'View Cart',
           onPressed: () {
-            Navigator.push(
-              context,
+            Navigator.of(context).push(
+              
               MaterialPageRoute(builder: (context) => const CartPage()),
             );
           },

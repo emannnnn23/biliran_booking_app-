@@ -1,13 +1,11 @@
 // lib/screens/product_details_page.dart
-// -------------------------------------------------------
-// PRODUCT DETAILS PAGE (with visible Chat Seller button)
-// -------------------------------------------------------
 
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../models/product_model.dart';
 import 'chat_page.dart';
-import '../data/mock_messages.dart'; // ✅ import your MessageThread model
+import '../data/mock_messages.dart';
+import '../data/mock_user.dart';
 
 class ProductDetailsPage extends StatelessWidget {
   final Product product;
@@ -16,33 +14,23 @@ class ProductDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 🔹 Assume current client is logged in
+    final currentUser = mockUsers.firstWhere(
+      (u) => u.role == "Client",
+      orElse: () => mockUsers.first,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Product Details'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.favorite_border),
-            tooltip: 'Add to Wishlist',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Added to wishlist (mock).'),
-                ),
-              );
-            },
-          ),
-        ],
       ),
 
-      // -------------------------------------------------------
-      // MAIN BODY
-      // -------------------------------------------------------
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🖼️ PRODUCT IMAGE
+            // IMAGE
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.asset(
@@ -54,138 +42,122 @@ class ProductDetailsPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // 🧾 PRODUCT NAME
+            // NAME
             Text(
               product.name,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: AppColors.text,
               ),
             ),
 
             const SizedBox(height: 8),
 
-            // 💰 PRICE
+            // PRICE
             Text(
-              '₱${product.price.toStringAsFixed(2)}',
+              "₱${product.price.toStringAsFixed(2)}",
               style: const TextStyle(
                 fontSize: 20,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
                 color: AppColors.primary,
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
-            // 🧍‍♀️ SELLER INFO
+            // SELLER
             Row(
               children: [
                 const CircleAvatar(
                   backgroundImage:
-                      AssetImage('assets/images/profile_placeholder.png'),
-                  radius: 22,
+                      AssetImage("assets/images/profile_placeholder.png"),
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  'Sold by ${product.seller}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.text,
-                  ),
+                  "Sold by ${product.seller}",
+                  style: const TextStyle(fontSize: 16),
                 ),
               ],
             ),
 
             const Divider(height: 30),
 
-            // 📝 DESCRIPTION
+            // DESCRIPTION
             const Text(
-              'Description',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.text,
-              ),
+              "Description",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
-            Text(
-              product.description,
-              style: const TextStyle(fontSize: 15, color: AppColors.text),
-            ),
-            const SizedBox(height: 100), // gives space before buttons
+            Text(product.description),
+            const SizedBox(height: 100),
           ],
         ),
       ),
 
-      // -------------------------------------------------------
-      // FIXED BOTTOM ACTION BUTTONS
-      // -------------------------------------------------------
+      // BOTTOM BAR
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 6,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
         child: Row(
           children: [
-            // 💬 Chat Seller
+            // CHAT SELLER
             Expanded(
               child: OutlinedButton.icon(
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text("Chat Seller"),
                 onPressed: () {
-                  // ✅ Use your MessageThread model here
-                  final newThread = MessageThread(
-                    providerName: product.seller,
-                    providerImage: 'assets/images/profile_placeholder.png',
-                    lastMessage:
-                        'Hello! I’m interested in ${product.name}.',
-                    timestamp: DateTime.now(),
+                  // 1️⃣ Try to find existing thread
+                  MockMessageThread? thread = mockThreads.firstWhere(
+                    (t) =>
+                        t.clientEmail == currentUser.email &&
+                        t.providerEmail ==
+                            "${product.seller.toLowerCase()}@mock.com",
+                    orElse: () => MockMessageThread(
+                      clientEmail: currentUser.email,
+                      providerEmail:
+                          "${product.seller.toLowerCase()}@mock.com",
+                      providerName: product.seller,
+                      providerImage:
+                          "assets/images/profile_placeholder.png",
+                      messages: [
+                        ChatMessage(
+                          sender: currentUser.email,
+                          text: "Hello! I'm interested in ${product.name}.",
+                          time: DateTime.now(),
+                        )
+                      ], clientName: '',
+                    ),
                   );
 
+                  // 2️⃣ Add thread if new
+                  if (!mockThreads.contains(thread)) {
+                    mockThreads.add(thread);
+                  }
+
+                  // 3️⃣ Open Chat
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => ChatPage(thread: newThread),
+                      builder: (_) => ChatPage(
+                        thread: thread,
+                        currentUserEmail: currentUser.email,
+                      ),
                     ),
                   );
                 },
-                icon: const Icon(Icons.chat_bubble_outline),
-                label: const Text('Chat Seller'),
-                style: OutlinedButton.styleFrom(
-                  side:
-                      const BorderSide(color: AppColors.primary, width: 1.5),
-                  minimumSize: const Size.fromHeight(50),
-                ),
               ),
             ),
 
             const SizedBox(width: 12),
 
-            // 🛒 Buy Now
+            // BUY NOW
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          'Purchased "${product.name}" successfully (mock)!'),
-                      backgroundColor: AppColors.primary,
-                    ),
-                  );
-                },
                 icon: const Icon(Icons.shopping_cart_checkout),
-                label: const Text('Buy Now'),
+                label: const Text("Buy Now"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  minimumSize: const Size.fromHeight(50),
                 ),
+                onPressed: () {},
               ),
             ),
           ],

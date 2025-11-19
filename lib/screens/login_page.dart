@@ -5,7 +5,7 @@
 
 import 'package:flutter/material.dart';
 import '../data/mock_user.dart';
-
+import '/provider_screens/provider_main_navigation.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -60,11 +60,13 @@ class _LoginPageState extends State<LoginPage> {
           arguments: {'email': email},
         );
       } else if (user.role == 'Service Provider') {
-        Navigator.pushReplacementNamed(
-          context,
-          '/provider/setup',
-          arguments: {'email': email},
-        );
+        Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(
+    builder: (_) => ProviderMainNavigation(email: email),
+    ),
+      );
+
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

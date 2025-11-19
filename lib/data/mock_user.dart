@@ -1,7 +1,7 @@
 // lib/data/mock_users.dart
 // -------------------------------------------------------
-// MOCK USER DATA for Signup, Login, and OTP Verification
-// + Extended for Client Information (frontend only)
+// MOCK USER DATA for Signup, Login, OTP Verification,
+// Client Information, and Provider Information
 // -------------------------------------------------------
 
 import 'package:flutter/foundation.dart';
@@ -10,27 +10,55 @@ class MockUser {
   final String email;
   final String password;
   final String role; // 'Client' or 'Service Provider'
-  bool isVerified;
+  bool isVerified; // OTP verified
 
-  // 🔹 Optional fields (filled after verification or info form)
+  // -------------------------------------------------------
+  // PROVIDER FIELDS
+  // -------------------------------------------------------
+  String serviceType; // booking | selling | both
+  String? businessName;
+  String? businessId; // NEW ✔ Business ID file path
+  List<String>? bookingServices = [] ;  // e.g., Photography, Catering
+  List<String>? sellingProducts = [];    // e.g., Flowers, Balloons
+
+
+  // -------------------------------------------------------
+  // CLIENT FIELDS
+  // -------------------------------------------------------
   String? firstName;
   String? middleInitial;
   String? lastName;
+
   String? barangay;
   String? municipality;
   String? fullAddress;
+
   int? age;
   String? phoneNumber;
-  String? validId; // filename or uploaded ID path
 
-  List<String>? preferences; // client preferences for recommendation
-  String? location; // deprecated — use barangay + municipality instead
+  bool phoneVerified; // replaces valid ID workflow
 
+  List<String>? preferences; // for recommendation system
+  String? location; // deprecated
+
+  // -------------------------------------------------------
+  // CONSTRUCTOR
+  // -------------------------------------------------------
   MockUser({
     required this.email,
     required this.password,
     required this.role,
     this.isVerified = false,
+
+    // Provider defaults
+    this.serviceType = "booking",
+    this.bookingServices,
+    this.sellingProducts,
+
+    this.businessName,
+    this.businessId, // NEW ✔
+
+    // Client// and provider shared fields
     this.firstName,
     this.middleInitial,
     this.lastName,
@@ -39,7 +67,8 @@ class MockUser {
     this.fullAddress,
     this.age,
     this.phoneNumber,
-    this.validId,
+   //client default
+    this.phoneVerified = false,
     this.preferences,
     this.location,
   });
@@ -61,9 +90,10 @@ List<MockUser> mockUsers = [
     fullAddress: 'Larrazabal, Naval, Biliran',
     age: 25,
     phoneNumber: '09123456789',
-    validId: 'maria_id.png',
+    phoneVerified: true,
     preferences: ['Photography', 'Catering'],
   ),
+
   MockUser(
     email: 'provider@example.com',
     password: '123456',
@@ -71,11 +101,13 @@ List<MockUser> mockUsers = [
     isVerified: true,
     firstName: 'John',
     lastName: 'Dela Cruz',
+    businessName: 'John Studio',
+    businessId: 'mock_uploads/john_business_id.png', // example ✔
   ),
 ];
 
 // -------------------------------------------------------
-// 🧩 Helper: Find user safely (prevents crashes)
+// 🧩 Helper — safe lookup
 // -------------------------------------------------------
 MockUser? _findUser(String email) {
   try {
@@ -93,17 +125,19 @@ bool addMockUser(String email, String password, String role) {
   final exists = mockUsers.any((u) => u.email == email);
   if (exists) return false;
 
-  mockUsers.add(MockUser(
-    email: email,
-    password: password,
-    role: role,
-    isVerified: false,
-  ));
+  mockUsers.add(
+    MockUser(
+      email: email,
+      password: password,
+      role: role,
+      isVerified: false,
+    ),
+  );
   return true;
 }
 
 // -------------------------------------------------------
-// 🔹 Verify account (mark as verified)
+// 🔹 Verify account (OTP)
 // -------------------------------------------------------
 void verifyMockUser(String email) {
   final user = _findUser(email);
@@ -111,7 +145,7 @@ void verifyMockUser(String email) {
 }
 
 // -------------------------------------------------------
-// 🔹 Authenticate (Login)
+// 🔹 Authenticate Login
 // -------------------------------------------------------
 MockUser? authenticateUser(String email, String password) {
   final user = _findUser(email);
@@ -122,27 +156,22 @@ MockUser? authenticateUser(String email, String password) {
 }
 
 // -------------------------------------------------------
-// 🔹 Update Client Preferences (for recommendation system)
+// 🔹 Update Client Preferences
 // -------------------------------------------------------
 void updateClientPreferences(String email, List<String> prefs) {
   final user = _findUser(email);
   if (user != null) {
     user.preferences = prefs;
     debugPrint('✅ Preferences updated for $email: ${prefs.join(", ")}');
-  } else {
-    debugPrint('⚠️ Could not update preferences — user not found: $email');
   }
 }
 
 // -------------------------------------------------------
-// 🔹 Update Client Information (for new info form page)
+// 🔹 Update Client Information
 // -------------------------------------------------------
 void updateClientInfo(String email, Map<String, dynamic> info) {
   final user = _findUser(email);
-  if (user == null) {
-    debugPrint('⚠️ Could not update client info — user not found: $email');
-    return;
-  }
+  if (user == null) return;
 
   user.firstName = info['firstName'];
   user.middleInitial = info['middleInitial'];
@@ -152,21 +181,19 @@ void updateClientInfo(String email, Map<String, dynamic> info) {
   user.fullAddress = info['fullAddress'];
   user.age = info['age'];
   user.phoneNumber = info['phoneNumber'];
-  user.validId = info['validId'];
+  user.phoneVerified = true;
 
   debugPrint('✅ Client info updated for $email');
 }
 
 // -------------------------------------------------------
-// 🔹 Debug Helper: Print all mock users (for testing)
+// 🔹 Debug Helper
 // -------------------------------------------------------
 void debugPrintUsers() {
   debugPrint('📋 MOCK USERS:');
   for (var u in mockUsers) {
     debugPrint(
-      '👤 ${u.email} | Verified: ${u.isVerified} | '
-      'Name: ${u.firstName ?? "-"} ${u.lastName ?? "-"} | '
-      'Municipality: ${u.municipality ?? "-"} | Prefs: ${u.preferences ?? []}',
+      '👤 ${u.email} | BusinessID: ${u.businessId ?? "None"} | OTP: ${u.isVerified}',
     );
   }
 }
